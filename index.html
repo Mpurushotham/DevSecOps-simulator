@@ -1,72 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DevSecOps Visualizer - Interactive Security Pipeline Demo</title>
-    <meta name="description" content="Interactive DevSecOps pipeline visualization demonstrating security vulnerabilities, CI/CD stages, and real-time threat detection with OWASP compliance.">
-    <meta name="keywords" content="DevSecOps, Security, CI/CD, OWASP, SQL Injection, Pipeline, Visualization">
-    <meta name="author" content="DevSecOps Visualizer">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="DevSecOps Visualizer">
-    <meta property="og:description" content="Interactive security pipeline demonstration">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="/assets/og-image.png">
-    
-    <!-- Preload Critical Resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
-    
-    <!-- CSS -->
-    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Critical CSS -->
-    <style id="critical-css">
-        /* Critical above-fold styles */
-        :root {
-            --color-slate-50: #f8fafc;
-            --color-slate-900: #0f172a;
-            --color-indigo-500: #6366f1;
-            --color-emerald-500: #10b981;
-        }
-        
-        * {
+    <title>DevSecOps Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-        
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        
-        #app-loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0f172a;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
-        }
-        
         .loading-spinner {
             width: 48px;
             height: 48px;
@@ -75,89 +22,28 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .grid-pattern {
-            background-image: 
-                linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        
-        /* Performance optimizations */
-        .will-change-transform {
-            will-change: transform;
-        }
-        
-        .content-visibility-auto {
-            content-visibility: auto;
-        }
     </style>
-    
-    <!-- Lazy loaded non-critical CSS -->
-    <link rel="stylesheet" href="styles.css" media="print" onload="this.media='all'">
 </head>
-<body class="antialiased">
-    <!-- App Loading Screen -->
-    <div id="app-loading">
-        <div class="loading-spinner mb-4"></div>
-        <div class="text-slate-400 text-sm">Initializing DevSecOps Visualizer...</div>
-        <div class="mt-2 text-xs text-slate-600">Loading security modules</div>
+<body>
+    <div id="root">
+        <div class="flex items-center justify-center h-screen">
+            <div class="text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <div class="text-slate-400">Loading DevSecOps Visualizer...</div>
+            </div>
+        </div>
     </div>
 
-    <!-- Main App Container -->
-    <div id="root" class="hidden"></div>
-
-    <!-- Service Worker Registration -->
-    <script>
-        // Register service worker for PWA capabilities
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('SW registered: ', registration))
-                    .catch(registrationError => console.log('SW registration failed: ', registrationError));
-            });
-        }
-    </script>
-
-    <!-- External Dependencies -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.min.js" crossorigin></script>
-    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js" crossorigin></script>
-    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js" crossorigin></script>
-
-    <!-- Application Scripts -->
-    <script type="text/babel" src="js/constants.js"></script>
-    <script type="text/babel" src="js/utils.js"></script>
-    <script type="text/babel" src="js/components/ArchitectureDiagram.js"></script>
-    <script type="text/babel" src="js/components/AICopilot.js"></script>
-    <script type="text/babel" src="js/components/MetricsDashboard.js"></script>
-    <script type="text/babel" src="js/components/InfoModal.js"></script>
-    <script type="text/babel" src="js/app.js"></script>
-
-    <!-- Performance Monitoring -->
-    <script>
-        // Hide loading screen when app is ready
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                document.getElementById('app-loading').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('app-loading').style.display = 'none';
-                    document.getElementById('root').classList.remove('hidden');
-                }, 500);
-            }, 1000);
-        });
-
-        // Error tracking
-        window.addEventListener('error', (e) => {
-            console.error('Application Error:', e.error);
-        });
-    </script>
+    
+    <!-- Main App Script -->
+    <script type="text/babel" src="app.js"></script>
 </body>
 </html>
