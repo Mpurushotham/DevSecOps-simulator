@@ -17,35 +17,50 @@ const PIPELINE_STAGES = [
         name: 'Code & Commit',
         description: 'Developer commits code. Pre-commit hooks run secret scanning.',
         icon: Icons.Code,
-        status: 'IDLE'
+        status: 'IDLE',
+        securityChecks: ['Secret Detection', 'SAST', 'Code Quality'],
+        tools: ['Git Hooks', 'SonarQube', 'Semgrep'],
+        risks: ['Hardcoded Secrets', 'SQL Injection', 'XSS']
     },
     {
         id: 'build',
         name: 'Build & SCA',
         description: 'Compile artifacts. Software Composition Analysis checks dependencies.',
         icon: Icons.Box,
-        status: 'IDLE'
+        status: 'IDLE',
+        securityChecks: ['Dependency Scanning', 'Software Bill of Materials', 'License Compliance'],
+        tools: ['OWASP Dependency Check', 'Snyk', 'WhiteSource'],
+        risks: ['Known Vulnerabilities', 'License Violations', 'Outdated Dependencies']
     },
     {
         id: 'test',
         name: 'Test (SAST)',
         description: 'Static Analysis Security Testing scans source code for flaws.',
         icon: Icons.ShieldCheck,
-        status: 'IDLE'
+        status: 'IDLE',
+        securityChecks: ['Static Analysis', 'Dynamic Analysis', 'Security Unit Tests'],
+        tools: ['Checkmarx', 'Veracode', 'Burp Suite'],
+        risks: ['Business Logic Flaws', 'Authentication Bypass', 'Data Exposure']
     },
     {
         id: 'deploy',
         name: 'Deploy (IaC)',
         description: 'Infrastructure as Code deployment to staging/production clusters.',
         icon: Icons.Rocket,
-        status: 'IDLE'
+        status: 'IDLE',
+        securityChecks: ['Infrastructure Scanning', 'Policy as Code', 'Container Security'],
+        tools: ['Terraform', 'Kubernetes', 'OpenPolicyAgent'],
+        risks: ['Misconfigured Services', 'Exposed Ports', 'Insecure Network Policies']
     },
     {
         id: 'monitor',
         name: 'Monitor (DAST)',
         description: 'Runtime monitoring and Dynamic Analysis.',
         icon: Icons.Activity,
-        status: 'IDLE'
+        status: 'IDLE',
+        securityChecks: ['Runtime Protection', 'Threat Detection', 'Compliance Monitoring'],
+        tools: ['WAF', 'SIEM', 'Threat Intelligence'],
+        risks: ['Zero-day Attacks', 'Data Breaches', 'Compliance Violations']
     }
 ];
 
@@ -86,4 +101,31 @@ const StageStatus = {
     RUNNING: 'RUNNING',
     SUCCESS: 'SUCCESS',
     ERROR: 'ERROR'
+};
+
+// Security Constants
+const SecurityConstants = {
+    OWASP_TOP_10: {
+        'A01': { 
+            name: 'Broken Access Control', 
+            description: 'Restrictions on what authenticated users are allowed to do are not properly enforced.',
+            examples: ['Vertical privilege escalation', 'Horizontal privilege escalation', 'IDOR']
+        },
+        'A03': { 
+            name: 'Injection', 
+            description: 'Untrusted data is sent to an interpreter as part of a command or query.',
+            examples: ['SQL Injection', 'NoSQL Injection', 'Command Injection']
+        },
+        'A07': { 
+            name: 'Identification and Authentication Failures', 
+            description: 'Confirmation of user identity, authentication, and session management is done incorrectly.',
+            examples: ['Weak passwords', 'Session fixation', 'Hardcoded credentials']
+        }
+    },
+    VULNERABILITY_SEVERITIES: {
+        CRITICAL: { color: 'bg-red-500', text: 'text-red-400', score: 10 },
+        HIGH: { color: 'bg-orange-500', text: 'text-orange-400', score: 8 },
+        MEDIUM: { color: 'bg-yellow-500', text: 'text-yellow-400', score: 5 },
+        LOW: { color: 'bg-blue-500', text: 'text-blue-400', score: 2 }
+    }
 };
