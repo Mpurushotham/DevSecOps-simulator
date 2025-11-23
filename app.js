@@ -426,6 +426,39 @@ function DevSecOpsApp() {
             )}
         </div>
     );
+ return (
+        <div className="flex h-screen bg-slate-900 text-white">
+            {/* ... existing sidebar ... */}
+            
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col">
+                {/* ... existing header ... */}
+
+                {/* Content Area - UPDATED */}
+                <div className="flex-1 p-8 overflow-y-auto">
+                    {/* Architecture Diagram */}
+                    <ArchitectureDiagram 
+                        activeStageId={currentStage.id}
+                        pipelineStatus={pipelineStatus}
+                        isSecure={isSecure}
+                    />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* ... existing code and logs panels ... */}
+                    </div>
+                </div>
+            </div>
+
+            {/* Enhanced Guide Modal */}
+            <GuideModal 
+                isOpen={isGuideOpen}
+                onClose={() => setIsGuideOpen(false)}
+                currentStageIndex={currentStageIndex}
+                isSecure={isSecure}
+                securityScore={securityScore}
+            />
+        </div>
+    );
 }
 
 // Render the app
