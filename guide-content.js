@@ -33,8 +33,8 @@ const GUIDE_CONTENT = [
             stages: PIPELINE_STAGES.map(stage => ({
                 name: stage.name,
                 description: stage.description,
-                securityTools: ['SAST Tools', 'Secret Detection', 'Code Analysis'],
-                risks: ['SQL Injection', 'XSS', 'Hardcoded Secrets']
+                securityTools: stage.securityChecks,
+                risks: stage.risks
             })),
             tools: {
                 'Code': ['Git Hooks', 'SonarQube', 'Semgrep', 'Checkov'],
@@ -77,48 +77,6 @@ const GUIDE_CONTENT = [
                     example: 'Vertical/horizontal privilege escalation, IDOR attacks',
                     impact: 'Unauthorized data access, data modification, privilege escalation',
                     prevention: 'Role-based access control, proper authorization checks'
-                }
-            ]
-        }
-    },
-    {
-        id: 'best-practices',
-        title: 'Best Practices',
-        icon: Icons.ShieldCheck,
-        content: {
-            heading: "Security Best Practices",
-            subheading: "Building Secure Applications",
-            text: "Implement these security practices throughout your development lifecycle to build robust and secure applications.",
-            practices: [
-                {
-                    category: 'Code Security',
-                    items: [
-                        'Use parameterized queries to prevent SQL injection',
-                        'Implement input validation and sanitization',
-                        'Avoid hardcoded secrets and credentials',
-                        'Use secure cryptographic algorithms',
-                        'Implement proper error handling'
-                    ]
-                },
-                {
-                    category: 'Infrastructure Security',
-                    items: [
-                        'Use Infrastructure as Code with security scanning',
-                        'Implement network segmentation',
-                        'Enable logging and monitoring',
-                        'Use container security scanning',
-                        'Implement auto-scaling with security groups'
-                    ]
-                },
-                {
-                    category: 'Process Security',
-                    items: [
-                        'Conduct regular security training',
-                        'Implement code review processes',
-                        'Use automated security testing',
-                        'Maintain incident response plans',
-                        'Conduct regular security audits'
-                    ]
                 }
             ]
         }
