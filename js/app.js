@@ -262,4 +262,170 @@ class DevSecOpsApp extends React.Component {
             // AI Copilot sidebar
             React.createElement(AICopilot, {
                 currentStage: currentStage,
-                isSimulating: pipelineStatus === 'RUN
+                isSimulating: pipelineStatus === 'RUNNING',
+                vulnerabilities: this.state.vulnerabilities
+            }),
+
+            // Info Modal
+            isGuideOpen && React.createElement(InfoModal, {
+                onClose: () => this.setState({ isGuideOpen: false }),
+                currentStageIndex: currentStageIndex,
+                isSecure: isSecure,
+                securityScore: securityScore
+            })
+        );
+    }
+
+    getMaturityLabel(score) {
+        if (score >= 90) return { label: 'Excellent', color: 'text-emerald-400', bg: 'bg-emerald-500', border: 'border-emerald-500' };
+        if (score >= 75) return { label: 'Secure', color: 'text-green-400', bg: 'bg-green-500', border: 'border-green-500' };
+        if (score >= 50) return { label: 'Improving', color: 'text-amber-400', bg: 'bg-amber-500', border: 'border-amber-500' };
+        if (score >= 25) return { label: 'Vulnerable', color: 'text-orange-400', bg: 'bg-orange-500', border: 'border-orange-500' };
+        return { label: 'Critical', color: 'text-red-400', bg: 'bg-red-500', border: 'border-red-500' };
+    }
+
+    renderSidebar(currentStage, securityScore, maturity, activeThreats) {
+        return React.createElement('div', { className: "w-80 bg-slate-900 border-r border-slate-800 flex flex-col shadow-xl z-20" },
+            // Header
+            React.createElement('div', { className: "p-6 border-b border-slate-800 bg-slate-900 relative" },
+                React.createElement('h1', { className: "text-xl font-bold gradient-text" }, 
+                    "DevSecOps Visualizer"
+                ),
+                React.createElement('p', { className: "text-xs text-slate-500 mt-2 font-medium" }, 
+                    "Interactive Security Pipeline"
+                ),
+                React.createElement('button', {
+                    onClick: () => this.setState({ isGuideOpen: true }),
+                    className: "mt-4 w-full flex items-center justify-center gap-2 py-2 px-3 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 rounded-lg text-xs font-semibold transition-all border border-indigo-500/20 hover:scale-105 active:scale-95"
+                },
+                    React.createElement(BookOpen, { size: 14 }),
+                    "Security Guide"
+                )
+            ),
+
+            // Security Score with enhanced visualization
+            this.renderSecurityScore(securityScore, maturity),
+
+            // Active Threats Panel
+            activeThreats.length > 0 && this.renderThreatsPanel(activeThreats),
+
+            // Pipeline Stages
+            React.createElement('div', { className: "flex-1 overflow-y-auto py-2 space-y-1 content-visibility-auto" },
+                PIPELINE_STAGES.map((stage, index) => 
+                    this.renderPipelineStage(stage, index, currentStage)
+                )
+            ),
+
+            // Reset Button
+            React.createElement('div', { className: "p-4 border-t border-slate-800 bg-slate-900" },
+                React.createElement('button', {
+                    onClick: () => this.handleResetSimulation(),
+                    className: "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-700 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all hover:border-slate-600 hover:scale-105 active:scale-95"
+                },
+                    React.createElement(RefreshCw, { size: 14 }),
+                    "Reset Simulation"
+                )
+            )
+        );
+    }
+
+    renderSecurityScore(securityScore, maturity) {
+        return React.createElement('div', { className: "px-6 pt-6 pb-2" },
+            React.createElement('div', { 
+                className: `relative bg-slate-950/50 rounded-xl p-4 border ${maturity.border} overflow-hidden shadow-lg transition-all duration-500 glass-effect` 
+            },
+                // Background glow effect
+                React.createElement('div', { 
+                    className: `absolute -right-6 -top-6 w-24 h-24 ${maturity.bg} opacity-10 rounded-full blur-2xl pointer-events-none` 
+                }),
+                
+                React.createElement('div', { className: "relative z-10" },
+                    React.createElement('div', { className: "flex justify-between items-end mb-2" },
+                        React.createElement('div', null,
+                            React.createElement('div', { className: "text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1" }, 
+                                "Security Maturity"
+                            ),
+                            React.createElement('div', { className: `text-lg font-bold ${maturity.color} flex items-center gap-1.5` },
+                                securityScore >= 75 ? React.createElement(ShieldCheck, { size: 16 }) : React.createElement(ShieldAlert, { size: 16 }),
+                                maturity.label
+                            )
+                        ),
+                        React.createElement('div', { className: "text-2xl font-black text-slate-200" }, 
+                            `${securityScore}%`
+                        )
+                    ),
+                    
+                    // Enhanced progress bar with segments
+                    React.createElement('div', { className: "h-2 w-full bg-slate-900 rounded-full overflow-hidden mb-2" },
+                        React.createElement(motion.div, {
+                            initial: { width: 0 },
+                            animate: { width: `${securityScore}%` },
+                            className: `h-full ${maturity.bg} transition-all duration-1000 ease-out`
+                        })
+                    ),
+                    
+                    // Security level indicators
+                    React.createElement('div', { className: "flex justify-between text-[10px] text-slate-500" },
+                        React.createElement('span', null, "Critical"),
+                        React.createElement('span', null, "Vulnerable"),
+                        React.createElement('span', null, "Improving"),
+                        React.createElement('span', null, "Secure"),
+                        React.createElement('span', null, "Excellent")
+                    )
+                )
+            )
+        );
+    }
+
+    renderThreatsPanel(activeThreats) {
+        return React.createElement('div', { className: "px-6 py-3" },
+            React.createElement('div', { className: "bg-red-900/20 border border-red-500/30 rounded-lg p-3" },
+                React.createElement('div', { className: "flex items-center gap-2 mb-2" },
+                    React.createElement(AlertTriangle, { size: 14, className: "text-red-400" }),
+                    React.createElement('span', { className: "text-xs font-bold text-red-400 uppercase tracking-wider" }, 
+                        "Active Threats"
+                    )
+                ),
+                React.createElement('div', { className: "space-y-1" },
+                    activeThreats.slice(-3).map((threat, index) => 
+                        React.createElement('div', { 
+                            key: index,
+                            className: "text-xs text-red-300 flex justify-between"
+                        },
+                            React.createElement('span', null, threat.type),
+                            React.createElement('span', { className: "text-red-400" }, threat.severity)
+                        )
+                    )
+                )
+            )
+        );
+    }
+
+    // ... Additional render methods for header, content area, etc.
+}
+
+// Enhanced component initialization
+const EnhancedApp = () => {
+    const [appReady, setAppReady] = React.useState(false);
+
+    React.useEffect(() => {
+        // Simulate app initialization
+        const timer = setTimeout(() => setAppReady(true), 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!appReady) {
+        return React.createElement('div', { className: "flex items-center justify-center h-screen bg-slate-950" },
+            React.createElement('div', { className: "text-center" },
+                React.createElement('div', { className: "loading-spinner mx-auto mb-4" }),
+                React.createElement('div', { className: "text-slate-400" }, "Loading Security Modules...")
+            )
+        );
+    }
+
+    return React.createElement(DevSecOpsApp);
+};
+
+// Initialize application
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(EnhancedApp));
