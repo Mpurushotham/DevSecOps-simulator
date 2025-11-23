@@ -22,7 +22,6 @@ class DevSecOpsApp {
         
         // Update dynamic content
         this.updateSecurityScore();
-        this.updateStageIndicators();
     }
 
     getAppHTML() {
@@ -41,12 +40,12 @@ class DevSecOpsApp {
                     <!-- Content Area -->
                     <div class="flex-1 p-8 overflow-y-auto custom-scrollbar">
                         <!-- Architecture Diagram -->
-                        ${this.getArchitectureDiagramHTML(currentStage)}
+                        ${ArchitectureDiagram.render(currentStage, this.pipelineStatus, this.isSecure)}
                         
                         <!-- Code and Logs Panels -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <!-- Code Panel -->
-                            ${this.getCodePanelHTML()}
+                            ${this.getCodePanelHTML(currentStage)}
 
                             <!-- Logs Panel -->
                             ${this.getLogsPanelHTML()}
@@ -55,7 +54,7 @@ class DevSecOpsApp {
                 </div>
 
                 <!-- Guide Modal -->
-                ${this.isGuideOpen ? this.getGuideModalHTML() : ''}
+                ${GuideModal.render(this.isGuideOpen, this.currentStageIndex, this.isSecure, this.securityScore, () => this.closeGuide())}
             </div>
         `;
     }
@@ -168,119 +167,7 @@ class DevSecOpsApp {
         }
     }
 
-    getArchitectureDiagramHTML(currentStage) {
-        const isScanning = this.pipelineStatus === StageStatus.RUNNING && ['code', 'build', 'test'].includes(currentStage.id);
-        const isRuntime = ['deploy', 'monitor'].includes(currentStage.id);
-        const showAttack = currentStage.id === 'monitor' && !this.isSecure;
-        const isVulnerableState = !this.isSecure && (currentStage.id === 'code' || currentStage.id === 'test' || currentStage.id === 'monitor');
-
-        return `
-            <div class="relative w-full h-64 bg-slate-900 rounded-lg border-2 overflow-hidden flex items-center justify-center mb-6 transition-colors duration-500 ${
-                isVulnerableState ? 'border-red-500/30' : 'border-slate-700'
-            }">
-                ${isScanning ? '<div class="absolute inset-0 overflow-hidden"><div class="absolute top-0 bottom-0 w-1 bg-blue-500 animate-scan"></div></div>' : ''}
-                
-                <div class="relative z-10 flex items-center justify-between w-full px-8">
-                    <!-- Client Node -->
-                    <div class="text-center">
-                        <div class="w-16 h-16 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-300 border-slate-600 bg-slate-800/60 text-slate-400">
-                            <div class="text-xl">${Icons.Globe}</div>
-                            <div class="text-xs mt-1">Client</div>
-                        </div>
-                        ${isRuntime ? `<div class="mt-2 text-xs ${this.isSecure ? 'text-green-400' : 'text-slate-500'}">${this.isSecure ? Icons.Lock : Icons.Unlock} HTTPS</div>` : ''}
-                    </div>
-
-                    <!-- Connection with WAF -->
-                    <div class="flex-1 relative h-1 bg-slate-600 mx-4">
-                        ${isRuntime ? `<div class="absolute w-3 h-1 rounded ${this.isSecure ? 'bg-blue-400' : 'bg-slate-500'} animate-move-right"></div>` : ''}
-                        <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                            isRuntime && this.isSecure ? 'border-blue-500 bg-blue-500/20 text-blue-400' : 'border-slate-600 text-slate-600'
-                        }">
-                            ${Icons.Shield}
-                        </div>
-                    </div>
-
-                    <!-- API Server Node -->
-                    <div class="text-center relative">
-                        ${showAttack ? `
-                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-                                <div class="text-red-500 text-sm">${Icons.AlertTriangle}</div>
-                                <div class="text-xs text-red-400">Attack!</div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="w-20 h-20 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-300 ${
-                            this.getNodeState('api', currentStage.id)
-                        }">
-                            <div class="text-2xl">${Icons.Server}</div>
-                            <div class="text-xs mt-1">API Server</div>
-                            ${isScanning ? `<div class="absolute -top-1 -right-1 text-blue-400 animate-spin">${Icons.Search}</div>` : ''}
-                        </div>
-
-                        ${!this.isSecure && currentStage.id === 'code' ? `
-                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-xs animate-pulse">
-                                ${Icons.FileJson}
-                            </div>
-                        ` : ''}
-                        ${!this.isSecure && currentStage.id === 'test' ? `
-                            <div class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs">
-                                ${Icons.Bug}
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    <!-- Connection to DB -->
-                    <div class="flex-1 relative h-1 bg-slate-600 mx-4">
-                        ${isRuntime ? `<div class="absolute w-2 h-2 rounded-full ${this.isSecure ? 'bg-green-400' : 'bg-slate-500'} animate-move-right" style="animation-delay: 0.5s"></div>` : ''}
-                        ${showAttack ? `<div class="absolute w-3 h-3 bg-red-500 rotate-45 animate-move-right"></div>` : ''}
-                    </div>
-
-                    <!-- Database Node -->
-                    <div class="text-center">
-                        <div class="w-16 h-16 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-300 ${
-                            this.getNodeState('db', currentStage.id)
-                        }">
-                            <div class="text-xl">${Icons.Database}</div>
-                            <div class="text-xs mt-1">Database</div>
-                        </div>
-                        
-                        ${showAttack ? `
-                            <div class="mt-2 px-2 py-1 bg-red-500/20 border border-red-500/50 rounded text-xs text-red-400 animate-pulse">
-                                SQL Injection!
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <!-- Stage Description -->
-                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                    <div class="bg-slate-800/80 border border-slate-600 rounded-full px-4 py-2 flex items-center gap-3">
-                        <div class="p-2 rounded-full ${isVulnerableState ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'}">
-                            ${currentStage.icon}
-                        </div>
-                        <div class="text-sm">
-                            <div class="text-xs text-slate-400 uppercase tracking-wide">${currentStage.name}</div>
-                            <div class="text-slate-200">${currentStage.description}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    getNodeState(nodeType, stageId) {
-        if (this.pipelineStatus === StageStatus.ERROR) return 'border-red-500 bg-red-900/20 text-red-400';
-        if (!this.isSecure) {
-            if (nodeType === 'api' && stageId === 'code') return 'border-yellow-500 bg-yellow-500/10 text-yellow-400 animate-pulse';
-            if (nodeType === 'api' && stageId === 'test') return 'border-red-500 bg-red-500/10 text-red-400';
-            if (nodeType === 'db' && stageId === 'monitor') return 'border-red-500 bg-red-500/10 text-red-400';
-        }
-        if (this.isSecure && this.pipelineStatus === StageStatus.SUCCESS) return 'border-green-500 bg-green-500/10 text-green-400';
-        return 'border-slate-600 bg-slate-800/60 text-slate-400';
-    }
-
-    getCodePanelHTML() {
-        const currentStage = PIPELINE_STAGES[this.currentStageIndex];
+    getCodePanelHTML(currentStage) {
         return `
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
@@ -334,64 +221,41 @@ class DevSecOpsApp {
         `;
     }
 
-    getGuideModalHTML() {
-        return `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <div class="w-64 bg-slate-900 border-r border-slate-700 p-4 overflow-y-auto">
-                        <div class="flex items-center gap-2 text-blue-400 mb-6">
-                            <span class="text-lg">${Icons.BookOpen}</span>
-                            <span class="font-bold">Security Guide</span>
-                        </div>
-                        <p class="text-slate-400 text-sm">Security guide content would go here...</p>
-                    </div>
-                    <div class="flex-1 flex flex-col">
-                        <div class="flex justify-between items-center p-6 border-b border-slate-700">
-                            <h2 class="text-xl font-bold text-white">Security Guide</h2>
-                            <button id="close-guide-btn" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-700 transition-colors">
-                                <span class="text-lg">${Icons.X}</span>
-                            </button>
-                        </div>
-                        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                            <p class="text-slate-300">Interactive security guide content...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     attachEventListeners() {
         // Guide button
         const guideBtn = document.getElementById('guide-btn');
-        if (guideBtn) guideBtn.addEventListener('click', () => this.openGuide());
-
-        // Close guide button
-        const closeGuideBtn = document.getElementById('close-guide-btn');
-        if (closeGuideBtn) closeGuideBtn.addEventListener('click', () => this.closeGuide());
+        if (guideBtn) {
+            guideBtn.addEventListener('click', () => this.openGuide());
+        }
 
         // Run pipeline button
         const runBtn = document.getElementById('run-btn');
-        if (runBtn) runBtn.addEventListener('click', () => this.runStage());
+        if (runBtn) {
+            runBtn.addEventListener('click', () => this.runStage());
+        }
 
         // Next stage button
         const nextBtn = document.getElementById('next-btn');
-        if (nextBtn) nextBtn.addEventListener('click', () => this.nextStage());
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.nextStage());
+        }
 
         // Fix vulnerabilities button
         const fixBtn = document.getElementById('fix-btn');
-        if (fixBtn) fixBtn.addEventListener('click', () => this.fixCode());
+        if (fixBtn) {
+            fixBtn.addEventListener('click', () => this.fixCode());
+        }
 
         // Reset button
         const resetBtn = document.getElementById('reset-btn');
-        if (resetBtn) resetBtn.addEventListener('click', () => this.reset());
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.reset());
+        }
 
-        // Close modal when clicking outside
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                this.closeGuide();
-            }
-        });
+        // Attach guide modal event listeners if modal is open
+        if (this.isGuideOpen) {
+            GuideModal.attachEventListeners(() => this.closeGuide());
+        }
     }
 
     openGuide() {
@@ -486,10 +350,6 @@ class DevSecOpsApp {
         if (score >= 80) return { label: 'Secure', color: 'text-green-400', bg: 'bg-green-500' };
         if (score >= 40) return { label: 'Improving', color: 'text-yellow-400', bg: 'bg-yellow-500' };
         return { label: 'Vulnerable', color: 'text-red-400', bg: 'bg-red-500' };
-    }
-
-    updateStageIndicators() {
-        // This will be handled by the render method
     }
 }
 
